@@ -122,7 +122,7 @@ void display1(void)
 {
 
 	glClearColor(1.0,1.0,0.1,1.0);
-	display_string(180,540,"NAME OF THE ENGINEERING COLLEGE",1); //correct cordinate according to name
+	/*display_string(180,540,"NAME OF THE ENGINEERING COLLEGE",1); //correct cordinate according to name
 	display_string(215,500,name3,1);
 	display_string(390,470,"HELP",2);
 	display_string(10,450,"MOUSE",2);
@@ -133,7 +133,7 @@ void display1(void)
 	display_string(10,280,"U-F FOR CAMERA VIEW SETTINGS",3);
 	display_string(10,250,"USE LEFT ARROW(<-) AND RIGHT ARROW(->) TO MOVE CAR",3);
 	display_string(10,220,"ESCAPE TO EXIT",3);
-	display_string(250,150,"PRESS SPACE BAR TO ENTER",2);
+	display_string(250,150,"PRESS SPACE BAR TO ENTER",2);*/
 	glutPostRedisplay();
 	glutSwapBuffers();
 
@@ -462,8 +462,8 @@ glEnd();
 
 //************IGNITION SYSTEM**********************************
 glPushMatrix();
-   glColor3f(0.7,0.7,0.7);
-   glTranslatef(1.65,0.2,0.3);
+   glColor3f(0.3,0.3,0.3);
+   glTranslatef(1.5,0.2,0.3);
    glRotatef(90.0,0,1,0);
    gluCylinder(t,0.02,0.03,.5,10,10);
 glPopMatrix();
@@ -475,7 +475,7 @@ glPushMatrix();
 	  for(theta=0;theta<360;theta=theta+20)
 	  {
   glVertex3f(0.6,0.2,0.62);
-  glVertex3f(0.6+(0.08*(cos(((theta+angle)*3.14)/180))),0.2+(0.08*(sin(((theta+angle)*3.14)/180))),0.62);
+  glVertex3f(0.6+(0.1*(cos(((theta+angle)*3.14)/180))),0.2+(0.1*(sin(((theta+angle)*3.14)/180))),0.62);
 	  }
 glEnd();
 
@@ -483,7 +483,7 @@ glBegin(GL_LINE_STRIP);
 	  for(theta=0;theta<360;theta=theta+20)
 	  {
   glVertex3f(0.6,0.2,0.18);
-  glVertex3f(0.6+(0.08*(cos(((theta+angle)*3.14)/180))),0.2+(0.08*(sin(((theta+angle)*3.14)/180))),0.18);
+  glVertex3f(0.6+(0.1*(cos(((theta+angle)*3.14)/180))),0.2+(0.1*(sin(((theta+angle)*3.14)/180))),0.18);
 	  }
 glEnd();
 
@@ -491,7 +491,7 @@ glBegin(GL_LINE_STRIP);
 for(theta=0;theta<360;theta=theta+20)
 	  {
   glVertex3f(1.7,0.2,0.18);
-  glVertex3f(1.7+(0.08*(cos(((theta+angle)*3.14)/180))),0.2+(0.08*(sin(((theta+angle)*3.14)/180))),0.18);
+  glVertex3f(1.7+(0.1*(cos(((theta+angle)*3.14)/180))),0.2+(0.1*(sin(((theta+angle)*3.14)/180))),0.18);
 	  }
 glEnd();
 
@@ -499,21 +499,21 @@ glBegin(GL_LINE_STRIP);
 for(theta=0;theta<360;theta=theta+20)
 	  {
   glVertex3f(1.7,0.2,0.62);
- glVertex3f(1.7+(0.08*(cos(((theta+angle)*3.14)/180))),0.2+(0.08*(sin(((theta+angle)*3.14)/180))),0.62);
+ glVertex3f(1.7+(0.1*(cos(((theta+angle)*3.14)/180))),0.2+(0.1*(sin(((theta+angle)*3.14)/180))),0.62);
 	  }
 glEnd();
   glTranslatef(0.6,0.2,0.6);
   glColor3f(0,0,0);
-  glutSolidTorus(0.025,0.07,10,25);
+  glutSolidTorus(0.04,0.1,10,40);
 
   glTranslatef(0,0,-0.4);
-  glutSolidTorus(0.025,0.07,10,25);
+  glutSolidTorus(0.04,0.1,10,40);
 
   glTranslatef(1.1,0,0);
-  glutSolidTorus(0.025,0.07,10,25);
+  glutSolidTorus(0.04,0.1,10,40);
 
   glTranslatef(0,0,0.4);
-  glutSolidTorus(0.025,0.07,10,25);
+  glutSolidTorus(0.04,0.1,10,40);
   glPopMatrix();
 //*************************************************************
   glPopMatrix();
@@ -836,7 +836,7 @@ int main(int argc, char **argv)
   glutSpecialFunc( SpecialKeyFunc );
   InitGL(Xsize,Ysize);
   int submenu=glutCreateMenu(colorMenu);
-  glutAddMenuEntry("blue", 6);
+ /* glutAddMenuEntry("blue", 6);
 	glutAddMenuEntry("red", 7);
 	glutAddMenuEntry("green",8);
 	glutAddMenuEntry("black",9);
@@ -850,7 +850,7 @@ int main(int argc, char **argv)
 	glutAddMenuEntry("toggle light",5);
 	glutAddSubMenu("car colors",submenu);
 	glutAddMenuEntry("daymode",12);
-	glutAddMenuEntry("Night mode",13);
+	glutAddMenuEntry("Night mode",13);*/
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   /* Now drop into the event loop from which we never return */
@@ -858,5 +858,6 @@ int main(int argc, char **argv)
   glutMainLoop();                      /* Start Event Processing Engine. */
   return 1;
 }
+
 
 
