@@ -25,7 +25,7 @@ GLfloat xangle=0.0,yangle=0.0,zangle=0.0,angle=0.0;   /* axis angles */
 GLfloat r=0,g=0,b=1;
 GLint light=1;
 int count=1,flg=1;
-int view=0;
+int view=1;
 int flag1=0,aflag=1;            //to switch car driving mode
 int flag2=0,wheelflag=0;   //to switch fog effect
 GLUquadricObj *t;
@@ -141,6 +141,19 @@ void display1(void)
 
 GLvoid DrawGLScene()
 {
+   GLfloat mat_specular1[] = { 0.0, 1.0, 0.0, 1.0 };
+   GLfloat mat_shininess1[] = { 2.0 };
+   GLfloat light_position1[] = { .3, 0.5, .6, 0.0 };
+   glClearColor (0.0, 0.0, 0.0, 0.0);
+   glShadeModel (GL_SMOOTH);
+
+   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular1);
+   glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess1);
+   glLightfv(GL_LIGHT0, GL_POSITION, light_position1);
+
+   glEnable(GL_LIGHTING);
+   glEnable(GL_LIGHT0);
+   glEnable(GL_DEPTH_TEST);
 
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	/* Clear The Screen And The Depth Buffer */
@@ -274,6 +287,8 @@ if(!aflag){
   glVertex3f(1.9,0.4,0.2);
   glVertex3f(1.9,0.2,0.2);
   glVertex3f(1.9,0.2,0.6);
+  
+  
 
   /* left of cube*/
   glVertex3f(1.8,0.2,0.2);
@@ -526,15 +541,11 @@ glEnd();
 
 /*  The function called whenever a "normal" key is pressed. */
 void NormalKey(GLubyte key, GLint x, GLint y)
-{
+{	
     switch ( key )    {
      case ESCAPE : printf("escape pressed. exit.\n");
 	               glutDestroyWindow(window);	/* Kill our window */
 	               exit(0);
-                                   break;
-
-      case ' ':view=1;
-                   DrawGLScene();
                    break;
 
       case 'x': xangle += 5.0;
@@ -610,8 +621,8 @@ void NormalKey(GLubyte key, GLint x, GLint y)
 		  break;
 
 
-     default:
-	break;
+     default: DrawGLScene();
+	           break;
     }
 
 }
