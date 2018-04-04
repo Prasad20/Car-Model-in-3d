@@ -14,6 +14,10 @@ GLint Ysize=800;
 float i,theta;
 GLint nml=0,day=1;
 
+float red = 0;
+float green = 0;
+float blue = 0;
+
 char name3[]="PROJECT:  3D CAR  ANIMATION";
 
 GLfloat xt=0.0,yt=0.0,zt=0.0,xw=0.0;   /* x,y,z translation */
@@ -141,10 +145,10 @@ void display1(void)
 
 GLvoid DrawGLScene()
 {
-   GLfloat mat_specular1[] = { 0.0, 1.0, 0.0, 1.0 };
+   GLfloat mat_specular1[] = { red, green, blue, 1.0 };
    GLfloat mat_shininess1[] = { 2.0 };
    GLfloat light_position1[] = { .3, 0.5, .6, 0.0 };
-   glClearColor (0.0, 0.0, 0.0, 0.0);
+   glClearColor (1.0, 1.0, 1.0, 0.0);
    glShadeModel (GL_SMOOTH);
 
    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular1);
@@ -543,6 +547,31 @@ glEnd();
 void NormalKey(GLubyte key, GLint x, GLint y)
 {	
     switch ( key )    {
+    	
+     case 'r'	 : red = 1.0;
+     			   blue = 0.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;
+     			   
+     case 'b'	 : red = 0.0;
+     			   blue = 1.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;
+					
+	 case 'g'	 : red = 0.0;
+     			   blue = 0.0;
+     			   green = 1.0;
+     			   glutDestroyWindow(window);
+     			   break;
+									
+	 case 'c'	 : red = 0.0;
+     			   blue = 0.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;							   
+     				
      case ESCAPE : printf("escape pressed. exit.\n");
 	               glutDestroyWindow(window);	/* Kill our window */
 	               exit(0);
@@ -847,22 +876,7 @@ int main(int argc, char **argv)
   glutSpecialFunc( SpecialKeyFunc );
   InitGL(Xsize,Ysize);
   int submenu=glutCreateMenu(colorMenu);
- /* glutAddMenuEntry("blue", 6);
-	glutAddMenuEntry("red", 7);
-	glutAddMenuEntry("green",8);
-	glutAddMenuEntry("black",9);
-	glutAddMenuEntry("yellow",10);
-	glutAddMenuEntry("grey",11);
-  glutCreateMenu(myMenu);
-	glutAddMenuEntry("car model mode", 1);
-	glutAddMenuEntry("car driving mode", 2);
-	glutAddMenuEntry("fog effect",3);
-	glutAddMenuEntry("wheel effect",4);
-	glutAddMenuEntry("toggle light",5);
-	glutAddSubMenu("car colors",submenu);
-	glutAddMenuEntry("daymode",12);
-	glutAddMenuEntry("Night mode",13);*/
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	 glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   /* Now drop into the event loop from which we never return */
 
