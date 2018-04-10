@@ -3,10 +3,28 @@
 #include <GL/glut.h>
 #include <math.h>
 #include <string.h>
+//#include <windows.h>
+//#include <mmsystem.h>
+#pragma comment(lib,"Winmm.lib")
+
+#include <SDL2/SDL.h>
+
+#define MUS_PATH "medium.wav"
+
+// prototype for our audio callback
+// see the implementation for more information
+void my_audio_callback(void *userdata, Uint8 *stream, int len);
+
+// variable declarations
+static Uint8 *audio_pos; // global pointer to the audio buffer to be played
+static Uint32 audio_len; // remaining length of the sample we have to play
+
+
 
 /* ASCII code for the escape key. */
 #define ESCAPE 27
-
+bool fullscreen = false;
+bool mouseDown = false;
 GLint window;
 GLint window2;
 GLint Xsize=1000;
@@ -14,24 +32,43 @@ GLint Ysize=800;
 float i,theta;
 GLint nml=0,day=1;
 
+int grass;
+
+int eflag=0;
+
+int flagg = 0;
+
+float red = 0;
+float green = 0;
+float blue = 0;
+
 char name3[]="PROJECT:  3D CAR  ANIMATION";
 
 GLfloat xt=0.0,yt=0.0,zt=0.0,xw=0.0;   /* x,y,z translation */
 GLfloat tx=295,ty=62;
 GLfloat xs=1.0,ys=1.0,zs=1.0;
-
+float xdiff = 0.0f;
+float ydiff = 0.0f;
 GLfloat xangle=0.0,yangle=0.0,zangle=0.0,angle=0.0;   /* axis angles */
 
 GLfloat r=0,g=0,b=1;
 GLint light=1;
 int count=1,flg=1;
-int view=0;
+int view=1;
 int flag1=0,aflag=1;            //to switch car driving mode
 int flag2=0,wheelflag=0;   //to switch fog effect
 GLUquadricObj *t;
 
 static void SpecialKeyFunc( int Key, int x, int y );
-
+void idle()
+{
+if (!mouseDown)
+{
+xangle += 0.3f;
+yangle += 0.4f;
+glutPostRedisplay();
+}
+}
 /* Simple  transformation routine */
 GLvoid Transform(GLfloat Width, GLfloat Height)
 {
@@ -41,7 +78,48 @@ GLvoid Transform(GLfloat Width, GLfloat Height)
   gluPerspective(45.0,Width/Height,0.1,100.0);  /* Calculate The Aspect Ratio Of The Window */
   glMatrixMode(GL_MODELVIEW);                   /* Switch back to the modelview matrix */
 }
+int fun()
+{
+    if (SDL_Init(SDL_INIT_AUDIO) < 0)
+      return 1;
 
+  // local variables
+  static Uint32 wav_length; //length of our sample
+  static Uint8 *wav_buffer; //buffer containing our audio file
+  static SDL_AudioSpec wav_spec; //the specs of our piece of music
+  
+  
+  /* Load the WAV */
+  // the specs, length and buffer of our wav are filled
+  if( SDL_LoadWAV(MUS_PATH, &wav_spec, &wav_buffer, &wav_length) == NULL ){
+    return 1;
+  }
+  // set the callback function
+  wav_spec.callback = my_audio_callback;
+  wav_spec.userdata = NULL;
+  // set our global static variables
+  audio_pos = wav_buffer; // copy sound buffer
+  audio_len = wav_length; // copy file length
+  
+  /* Open the audio device */
+  
+    if ( SDL_OpenAudio(&wav_spec, NULL) < 0 ){
+      fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
+      exit(-1);
+    }
+    
+    /* Start playing */
+       SDL_PauseAudio(0);
+
+    // wait until we're don't playing
+    while ( audio_len > 0 ) {
+      SDL_Delay(100); 
+    }
+    
+    // shut everything down
+    SDL_CloseAudio();
+    SDL_FreeWAV(wav_buffer);  
+}
 
 /* A general OpenGL initialization function.  Sets all of the initial parameters. */
 GLvoid InitGL(GLfloat Width, GLfloat Height)
@@ -72,6 +150,37 @@ glLightfv(GL_LIGHT0, GL_POSITION, position);
 
 }
 
+GLuint LoadBMP(const char *fileName)
+{
+	FILE *file;
+	unsigned char header[54],*data;
+	unsigned int dataPos,size,width, height;
+	file = fopen(fileName, "rb");
+	fread(header, 1, 54, file);				
+	dataPos		= *(int*)&(header[0x0A]);	
+	size		= *(int*)&(header[0x22]);	
+	width		= *(int*)&(header[0x12]);	
+	height		= *(int*)&(header[0x16]);	
+//	if (size == )
+		size = width * height * 3;
+//	if (dataPos == NULL)
+		dataPos = 54;
+	data = new unsigned char[size];
+	fread(data, 1, size, file);
+	fclose(file);
+	GLuint texture;
+	glGenTextures(1, &texture);				
+	glBindTexture(GL_TEXTURE_2D, texture);	
+
+
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data); 
+	return texture;
+}
+
 /* The function called when our window is resized  */
 GLvoid ReSizeGLScene(GLint Width, GLint Height)
 {
@@ -89,15 +198,6 @@ void init()
 	glOrtho(0.0,900.0,0.0,600.0,50.0,-50.0);
 	glutPostRedisplay(); 		// request redisplay
 }
-
-
-/* The main drawing function
-
-   In here we put all the OpenGL and calls to routines which manipulate
-   the OpenGL state and environment.
-
-   This is the function which will be called when a "redisplay" is requested.
-*/
 
 void display_string(int x, int y, char *string, int font)
 {
@@ -122,18 +222,6 @@ void display1(void)
 {
 
 	glClearColor(1.0,1.0,0.1,1.0);
-	/*display_string(180,540,"NAME OF THE ENGINEERING COLLEGE",1); //correct cordinate according to name
-	display_string(215,500,name3,1);
-	display_string(390,470,"HELP",2);
-	display_string(10,450,"MOUSE",2);
-	display_string(10,410,"PRESS RIGHT BUTTON FOR MENU",3);
-	display_string(10,370,"KEYBOARD",2);
-	display_string(10,340,"X-Y-Z KEYS FOR CORRESPONDING ROTATION",3);
-	display_string(10,310,"A-S-Q CAR CUSTOM SIZE SELECTION",3);
-	display_string(10,280,"U-F FOR CAMERA VIEW SETTINGS",3);
-	display_string(10,250,"USE LEFT ARROW(<-) AND RIGHT ARROW(->) TO MOVE CAR",3);
-	display_string(10,220,"ESCAPE TO EXIT",3);
-	display_string(250,150,"PRESS SPACE BAR TO ENTER",2);*/
 	glutPostRedisplay();
 	glutSwapBuffers();
 
@@ -141,10 +229,10 @@ void display1(void)
 
 GLvoid DrawGLScene()
 {
-   GLfloat mat_specular1[] = { 0.0, 1.0, 0.0, 1.0 };
+   GLfloat mat_specular1[] = { red, green, blue, 1.0 };
    GLfloat mat_shininess1[] = { 2.0 };
    GLfloat light_position1[] = { .3, 0.5, .6, 0.0 };
-   glClearColor (0.0, 0.0, 0.0, 0.0);
+   glClearColor (1.0, 1.0, 1.0, 0.0);
    glShadeModel (GL_SMOOTH);
 
    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular1);
@@ -223,18 +311,67 @@ if(!aflag){
   glEnd();
   glPointSize(200.0);
 
+  glColor3f(1.0,0.0,0.0);
+  glPointSize(30.0);
+  glBegin(GL_POINTS);
+  glVertex3f(1.9,0.3,0.5);
+ glVertex3f(1.9,0.3,0.3); 
+  glEnd();
+  glPointSize(200.0);
+ 
 
 
   glBegin(GL_QUADS);                /* OBJECT MODULE*/
 
   /* top of cube*/
   //************************FRONT BODY****************************************
-  glColor3f(r,g,b);
+/*  glColor3f(r,g,b);
   glVertex3f( 0.1, 0.4,0.6);
+  glVertex3f(0.2, 0.415,0.6);
+  glVertex3f(0.2, 0.415,0.2);
+  glVertex3f(0.1,0.4,0.2);
+  */
+  if(eflag==0)
+  {
+  glColor3f(0,1,0);
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  }
+  else
+  {
+  	glColor3f(0,1,0);
+    glVertex3f(0.1, 0.4,0.55);
+    glVertex3f(0.25, 0.7,0.55);
+    glVertex3f(0.25, 0.7,0.25);
+    glVertex3f(0.1,0.4,0.25);
+    
+     glColor3f(0.2,0.2,0.2);
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  }
+  
+  glColor3f(r,g,b);
+  glVertex3f(0.1, 0.4,0.2);
+  glVertex3f(0.5, 0.48,0.2);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.6);
+  glVertex3f(0.1,0.4,0.6);
+
+  glColor3f(r,g,b);
+  glVertex3f(0.49, 0.415,0.6);
   glVertex3f(0.6, 0.5,0.6);
   glVertex3f(0.6, 0.5,0.2);
-  glVertex3f( 0.1,0.4,0.2);
-
+  glVertex3f(0.49,0.415,0.2);
+  
+  
   /* bottom of cube*/
   glVertex3f( 0.1,0.2,0.6);
   glVertex3f(0.6,0.2,0.6);
@@ -270,7 +407,7 @@ if(!aflag){
   glVertex3f(1.5,0.65,0.2);        //top cover
   glVertex3f(1.5,0.65,0.6);
 //***************************back guard******************************
-  glColor3f(r,g,b);            /* Set The Color To Blue*/
+ /* glColor3f(r,g,b);            /* Set The Color To Blue*/
   glVertex3f( 1.8, 0.5,0.6);
   glVertex3f(1.8, 0.5,0.2);
   glVertex3f(1.9, 0.4, 0.2);
@@ -288,8 +425,6 @@ if(!aflag){
   glVertex3f(1.9,0.2,0.2);
   glVertex3f(1.9,0.2,0.6);
   
-  
-
   /* left of cube*/
   glVertex3f(1.8,0.2,0.2);
   glVertex3f(1.8,0.5,0.2);
@@ -302,10 +437,21 @@ if(!aflag){
   glVertex3f(1.9,0.4,0.6);
   glVertex3f(1.9,0.2,0.6);
 //******************MIDDLE BODY************************************
+  
+  if(flagg==1)
+  {
   glVertex3f( 0.6, 0.5,0.6);
   glVertex3f(0.6, 0.2,0.6);
   glVertex3f(1.8, 0.2, 0.6);
   glVertex3f(1.8,0.5,0.6);
+  }
+  else
+  {
+ glVertex3f( 0.6, 0.5,0.6);
+  glVertex3f(0.6, 0.2,0.6);
+  glVertex3f(1.8, 0.2, 0.6);
+  glVertex3f(1.8,0.5,0.6);
+  }
 
   /* bottom of cube*/
   glVertex3f( 0.6,0.2,0.6);
@@ -452,28 +598,6 @@ if(!aflag){
 	  glEnd();
 	  glPopMatrix();
   }
-//*************************************************************************************************
-
-/*
-
-
-glBegin(GL_TRIANGLES);                /* start drawing the cube.*/
-
-  /* top of cube
-  glColor3f(0.1,0.1,0.1);
-  glVertex3f( 1.5, 0.65,0.2);
-  glVertex3f( 1.5,0.5,0.2);       //tri back window
-  glVertex3f( 1.8,0.5,0.2);
-
-  glVertex3f( 1.5, 0.65,0.6);
-  glVertex3f( 1.5,0.5,0.6);       //tri back window
-  glVertex3f(1.8,0.5,0.6);
-
-glEnd();
-*/
-
-
-
 
 //************IGNITION SYSTEM**********************************
 glPushMatrix();
@@ -539,40 +663,82 @@ glEnd();
 }
 
 
-/*  The function called whenever a "normal" key is pressed. */
 void NormalKey(GLubyte key, GLint x, GLint y)
-{
+{	
     switch ( key )    {
+     case 'k'	: fun();
+     			      break;
+     case 'K' : SDL_CloseAudio();
+               
+                break;	 
+    	
+     case 'd'    : flagg = 0;
+     			   glutDestroyWindow(window);
+     			   break;	 
+	
+	case 'e'    :  eflag = 0;
+     			   glutDestroyWindow(window);
+     			   break;
+					
+	case 'E'    :  eflag = 1;
+     			   glutDestroyWindow(window);
+     			   break;	 					      			   
+
+     case 'r'	 : red = 1.0;
+     			   blue = 0.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;
+     			   
+     case 'b'	 : red = 0.0;
+     			   blue = 1.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;
+					
+	 case 'g'	 : red = 0.0;
+     			   blue = 0.0;
+     			   green = 1.0;
+     			   glutDestroyWindow(window);
+     			   break;
+									
+	 case 'c'	 : red = 0.0;
+     			   blue = 0.0;
+     			   green = 0.0;
+     			   glutDestroyWindow(window);
+     			   break;							   
+     				
      case ESCAPE : printf("escape pressed. exit.\n");
 	               glutDestroyWindow(window);	/* Kill our window */
 	               exit(0);
-                                   break;
-
-      case ' ':view=1;
-                   DrawGLScene();
                    break;
 
       case 'x': xangle += 5.0;
+                      fun();
                       glutPostRedisplay();
                       break;
 
        case 'X':xangle -= 5.0;
+                         fun();
                        glutPostRedisplay();
                        break;
 
       case 'y':
         yangle += 5.0;
+        fun(); 
         glutPostRedisplay();
         break;
 
      case 'Y':
         yangle -= 5.0;
+        fun();
         glutPostRedisplay();
         break;
 
      case 'z':
         zangle += 5.0;
         glutPostRedisplay();
+        fun();
         break;
 
      case 'Z':
@@ -625,8 +791,8 @@ void NormalKey(GLubyte key, GLint x, GLint y)
 		  break;
 
 
-     default:
-	break;
+     default: DrawGLScene();
+	           break;
     }
 
 }
@@ -822,7 +988,29 @@ void myreshape(int w,int h)
         glMatrixMode(GL_MODELVIEW);
         glutPostRedisplay();
 }
-
+void mouse(int button, int state, int x, int y)
+{
+if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+{
+mouseDown = true;
+ 
+xdiff = x - yangle;
+ydiff = -y + xangle;
+}
+else
+  mouseDown = false;
+}
+ 
+void mouseMotion(int x, int y)
+{
+if (mouseDown)
+{
+yangle = x - xdiff;
+xangle = y + ydiff;
+ 
+glutPostRedisplay();
+}
+}
 
 //*************************** Main ***************************************************************
 
@@ -851,23 +1039,9 @@ int main(int argc, char **argv)
   glutSpecialFunc( SpecialKeyFunc );
   InitGL(Xsize,Ysize);
   int submenu=glutCreateMenu(colorMenu);
- /* glutAddMenuEntry("blue", 6);
-	glutAddMenuEntry("red", 7);
-	glutAddMenuEntry("green",8);
-	glutAddMenuEntry("black",9);
-	glutAddMenuEntry("yellow",10);
-	glutAddMenuEntry("grey",11);
-  glutCreateMenu(myMenu);
-	glutAddMenuEntry("car model mode", 1);
-	glutAddMenuEntry("car driving mode", 2);
-	glutAddMenuEntry("fog effect",3);
-	glutAddMenuEntry("wheel effect",4);
-	glutAddMenuEntry("toggle light",5);
-	glutAddSubMenu("car colors",submenu);
-	glutAddMenuEntry("daymode",12);
-	glutAddMenuEntry("Night mode",13);*/
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-
+	 glutAttachMenu(GLUT_RIGHT_BUTTON);
+    glutMouseFunc(mouse);
+    glutMotionFunc(mouseMotion);
   /* Now drop into the event loop from which we never return */
 
   glutMainLoop();                      /* Start Event Processing Engine. */
@@ -875,4 +1049,15 @@ int main(int argc, char **argv)
 }
 
 
-
+void my_audio_callback(void *userdata, Uint8 *stream, int len) {
+  
+  if (audio_len ==0)
+    return;
+  
+  len = ( len > audio_len ? audio_len : len );
+  //SDL_memcpy (stream, audio_pos, len);          // simply copy from one buffer into the other
+  SDL_MixAudio(stream, audio_pos, len, SDL_MIX_MAXVOLUME);// mix from one buffer into another
+  
+  audio_pos += len;
+  audio_len -= len;
+}
