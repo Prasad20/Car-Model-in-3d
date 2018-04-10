@@ -3,6 +3,11 @@
 #include <GL/glut.h>
 #include <math.h>
 #include <string.h>
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib,"Winmm.lib")
+
+
 
 /* ASCII code for the escape key. */
 #define ESCAPE 27
@@ -13,6 +18,12 @@ GLint Xsize=1000;
 GLint Ysize=800;
 float i,theta;
 GLint nml=0,day=1;
+
+int grass;
+
+int eflag=0;
+
+int flagg = 0;
 
 float red = 0;
 float green = 0;
@@ -76,6 +87,37 @@ glLightfv(GL_LIGHT0, GL_POSITION, position);
 
 }
 
+GLuint LoadBMP(const char *fileName)
+{
+	FILE *file;
+	unsigned char header[54],*data;
+	unsigned int dataPos,size,width, height;
+	file = fopen(fileName, "rb");
+	fread(header, 1, 54, file);				
+	dataPos		= *(int*)&(header[0x0A]);	
+	size		= *(int*)&(header[0x22]);	
+	width		= *(int*)&(header[0x12]);	
+	height		= *(int*)&(header[0x16]);	
+//	if (size == )
+		size = width * height * 3;
+//	if (dataPos == NULL)
+		dataPos = 54;
+	data = new unsigned char[size];
+	fread(data, 1, size, file);
+	fclose(file);
+	GLuint texture;
+	glGenTextures(1, &texture);				
+	glBindTexture(GL_TEXTURE_2D, texture);	
+
+
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);	
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, data); 
+	return texture;
+}
+
 /* The function called when our window is resized  */
 GLvoid ReSizeGLScene(GLint Width, GLint Height)
 {
@@ -93,15 +135,6 @@ void init()
 	glOrtho(0.0,900.0,0.0,600.0,50.0,-50.0);
 	glutPostRedisplay(); 		// request redisplay
 }
-
-
-/* The main drawing function
-
-   In here we put all the OpenGL and calls to routines which manipulate
-   the OpenGL state and environment.
-
-   This is the function which will be called when a "redisplay" is requested.
-*/
 
 void display_string(int x, int y, char *string, int font)
 {
@@ -126,18 +159,6 @@ void display1(void)
 {
 
 	glClearColor(1.0,1.0,0.1,1.0);
-	/*display_string(180,540,"NAME OF THE ENGINEERING COLLEGE",1); //correct cordinate according to name
-	display_string(215,500,name3,1);
-	display_string(390,470,"HELP",2);
-	display_string(10,450,"MOUSE",2);
-	display_string(10,410,"PRESS RIGHT BUTTON FOR MENU",3);
-	display_string(10,370,"KEYBOARD",2);
-	display_string(10,340,"X-Y-Z KEYS FOR CORRESPONDING ROTATION",3);
-	display_string(10,310,"A-S-Q CAR CUSTOM SIZE SELECTION",3);
-	display_string(10,280,"U-F FOR CAMERA VIEW SETTINGS",3);
-	display_string(10,250,"USE LEFT ARROW(<-) AND RIGHT ARROW(->) TO MOVE CAR",3);
-	display_string(10,220,"ESCAPE TO EXIT",3);
-	display_string(250,150,"PRESS SPACE BAR TO ENTER",2);*/
 	glutPostRedisplay();
 	glutSwapBuffers();
 
@@ -227,18 +248,67 @@ if(!aflag){
   glEnd();
   glPointSize(200.0);
 
+  glColor3f(1.0,0.0,0.0);
+  glPointSize(30.0);
+  glBegin(GL_POINTS);
+  glVertex3f(1.9,0.3,0.5);
+ glVertex3f(1.9,0.3,0.3); 
+  glEnd();
+  glPointSize(200.0);
+ 
 
 
   glBegin(GL_QUADS);                /* OBJECT MODULE*/
 
   /* top of cube*/
   //************************FRONT BODY****************************************
-  glColor3f(r,g,b);
+/*  glColor3f(r,g,b);
   glVertex3f( 0.1, 0.4,0.6);
+  glVertex3f(0.2, 0.415,0.6);
+  glVertex3f(0.2, 0.415,0.2);
+  glVertex3f(0.1,0.4,0.2);
+  */
+  if(eflag==0)
+  {
+  glColor3f(0,1,0);
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  }
+  else
+  {
+  	glColor3f(0,1,0);
+    glVertex3f(0.1, 0.4,0.55);
+    glVertex3f(0.25, 0.7,0.55);
+    glVertex3f(0.25, 0.7,0.25);
+    glVertex3f(0.1,0.4,0.25);
+    
+     glColor3f(0.2,0.2,0.2);
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  }
+  
+  glColor3f(r,g,b);
+  glVertex3f(0.1, 0.4,0.2);
+  glVertex3f(0.5, 0.48,0.2);
+  glVertex3f(0.5, 0.48,0.25);
+  glVertex3f(0.1,0.4,0.25);
+  
+  glVertex3f(0.1, 0.4,0.55);
+  glVertex3f(0.5, 0.48,0.55);
+  glVertex3f(0.5, 0.48,0.6);
+  glVertex3f(0.1,0.4,0.6);
+
+  glColor3f(r,g,b);
+  glVertex3f(0.49, 0.415,0.6);
   glVertex3f(0.6, 0.5,0.6);
   glVertex3f(0.6, 0.5,0.2);
-  glVertex3f( 0.1,0.4,0.2);
-
+  glVertex3f(0.49,0.415,0.2);
+  
+  
   /* bottom of cube*/
   glVertex3f( 0.1,0.2,0.6);
   glVertex3f(0.6,0.2,0.6);
@@ -274,7 +344,7 @@ if(!aflag){
   glVertex3f(1.5,0.65,0.2);        //top cover
   glVertex3f(1.5,0.65,0.6);
 //***************************back guard******************************
-  glColor3f(r,g,b);            /* Set The Color To Blue*/
+ /* glColor3f(r,g,b);            /* Set The Color To Blue*/
   glVertex3f( 1.8, 0.5,0.6);
   glVertex3f(1.8, 0.5,0.2);
   glVertex3f(1.9, 0.4, 0.2);
@@ -292,8 +362,6 @@ if(!aflag){
   glVertex3f(1.9,0.2,0.2);
   glVertex3f(1.9,0.2,0.6);
   
-  
-
   /* left of cube*/
   glVertex3f(1.8,0.2,0.2);
   glVertex3f(1.8,0.5,0.2);
@@ -306,10 +374,21 @@ if(!aflag){
   glVertex3f(1.9,0.4,0.6);
   glVertex3f(1.9,0.2,0.6);
 //******************MIDDLE BODY************************************
+  
+  if(flagg==1)
+  {
   glVertex3f( 0.6, 0.5,0.6);
   glVertex3f(0.6, 0.2,0.6);
   glVertex3f(1.8, 0.2, 0.6);
   glVertex3f(1.8,0.5,0.6);
+  }
+  else
+  {
+ glVertex3f( 0.6, 0.5,0.6);
+  glVertex3f(0.6, 0.2,0.6);
+  glVertex3f(1.8, 0.2, 0.6);
+  glVertex3f(1.8,0.5,0.6);
+  }
 
   /* bottom of cube*/
   glVertex3f( 0.6,0.2,0.6);
@@ -456,28 +535,6 @@ if(!aflag){
 	  glEnd();
 	  glPopMatrix();
   }
-//*************************************************************************************************
-
-/*
-
-
-glBegin(GL_TRIANGLES);                /* start drawing the cube.*/
-
-  /* top of cube
-  glColor3f(0.1,0.1,0.1);
-  glVertex3f( 1.5, 0.65,0.2);
-  glVertex3f( 1.5,0.5,0.2);       //tri back window
-  glVertex3f( 1.8,0.5,0.2);
-
-  glVertex3f( 1.5, 0.65,0.6);
-  glVertex3f( 1.5,0.5,0.6);       //tri back window
-  glVertex3f(1.8,0.5,0.6);
-
-glEnd();
-*/
-
-
-
 
 //************IGNITION SYSTEM**********************************
 glPushMatrix();
@@ -543,11 +600,25 @@ glEnd();
 }
 
 
-/*  The function called whenever a "normal" key is pressed. */
 void NormalKey(GLubyte key, GLint x, GLint y)
 {	
     switch ( key )    {
+     case 'k'	: grass=LoadBMP("pht.bmp");
+     			   glutDestroyWindow(window);
+     			   break;	 
     	
+     case 'd'    : flagg = 0;
+     			   glutDestroyWindow(window);
+     			   break;	 
+	
+	case 'e'    :  eflag = 0;
+     			   glutDestroyWindow(window);
+     			   break;
+					
+	case 'E'    :  eflag = 1;
+     			   glutDestroyWindow(window);
+     			   break;	 					      			   
+
      case 'r'	 : red = 1.0;
      			   blue = 0.0;
      			   green = 0.0;
